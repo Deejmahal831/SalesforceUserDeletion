@@ -1,0 +1,33 @@
+@isTest
+private class MonthlyCleanupTest {
+
+    @isTest
+    static void testMonthlyCleanup() {
+        // Create a test user who hasn't logged in for over 31 days
+        Profile p = [SELECT Id FROM Profile WHERE Name = 'Standard User' LIMIT 1];
+
+        User inactiveUser = new User(
+            FirstName = 'Old',
+            LastName = 'User',
+            Email = 'olduser@example.com',
+            Username = 'olduser' + DateTime.now().getTime() + '@testorg.com',
+            Alias = 'oldusr',
+            TimeZoneSidKey = 'America/New_York',
+            LocaleSidKey = 'en_US',
+            EmailEncodingKey = 'UTF-8',
+            LanguageLocaleKey = 'en_US',
+            ProfileId = p.Id,
+            IsActive = true
+        );
+        insert inactiveUser;
+
+        Test.startTest();
+        Test.stopTest();
+
+        MonthlyCleanup cleanup = new MonthlyCleanup();
+        cleanup.execute(null);
+
+        User updatedUser = [SELECT IsActive FROM User WHERE Id = :inactiveUser.Id];
+        System.assertEquals(false, updatedUser.IsActive, 'User should be deactivated');
+    }
+}
