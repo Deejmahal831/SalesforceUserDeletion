@@ -1,17 +1,16 @@
-global class MonthlyCleanup implements Schedulable
-{
-    global void execute(SchedulableContext sc)
-    {
-        List<User> users = [select id, name, lastlogindate from user where isactive = true and lastlogindate < last_n_days:31];
+global class MonthlyCleanup implements Schedulable {
+    global void execute(SchedulableContext sc) {
+        List<User> usersToDeactivate = [
+            SELECT Id FROM User 
+            WHERE IsActive = true AND LastLoginDate < LAST_N_DAYS:31
+        ];
 
-        List<User> noLogUsers = new List<User>();
+        for (User user : usersToDeactivate) {
+            user.IsActive = false;
+        }
 
-        for(User u: users)
-            {
-                u.IsActive = false;
-                noLogUsers.add(u);
-            }
- 
-        update noLogUsers;
+        if (!usersToDeactivate.isEmpty()) {
+            update usersToDeactivate;
+        }
     }
 }
